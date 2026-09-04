@@ -8,6 +8,11 @@
 
 ---
 
+## 在线预览报告
+
+👉 [打开可视化样例报告](https://Elsht666.github.io/flashcheck/examples/sample-report.html)
+
+
 ## ✨ 功能特性
 
 | 检测维度 | 具体内容 |
