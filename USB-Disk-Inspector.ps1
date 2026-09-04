@@ -593,33 +593,161 @@ if ($dirty) {
 }
 
 # ============================================================
-#  8. 综合评价
+#  8. 综合评价（根据实测数据动态生成）
 # ============================================================
 Write-Section "八、综合评价与建议"
 
-$ratings = @()
-if ($readSpeed -gt 100) { $ratings += "读取性能优秀" }
-elseif ($readSpeed -gt 50) { $ratings += "读取性能良好" }
-else { $ratings += "读取性能一般" }
+# --- 性能评级 ---
+$readRating = if ($readSpeed -gt 100) { "优秀" } elseif ($readSpeed -gt 50) { "良好" } elseif ($readSpeed -gt 30) { "一般" } elseif ($readSpeed -gt 15) { "较差" } else { "很差" }
+$writeRating = if ($writeSpeed -gt 80) { "优秀" } elseif ($writeSpeed -gt 40) { "中等" } elseif ($writeSpeed -gt 20) { "一般" } elseif ($writeSpeed -gt 10) { "较差" } else { "很差" }
+if ($Quick -or $SkipWrite) {
+    $randomRating = "未测试"
+    $iops4kDisplay = "（快速模式已跳过）"
+} else {
+    $randomRating = if ($iops4k -gt 500) { "较好" } elseif ($iops4k -gt 100) { "一般" } elseif ($iops4k -gt 30) { "较差" } else { "很差" }
+    $iops4kDisplay = "$([math]::Round($iops4k,1)) IOPS"
+}
 
-if ($writeSpeed -gt 80) { $ratings += "写入性能优秀" }
-elseif ($writeSpeed -gt 40) { $ratings += "写入性能中等" }
-else { $ratings += "写入性能偏弱" }
+$overallScore = 0
+# 读取速度（满分4分）
+if ($readSpeed -gt 100) { $overallScore += 4 } elseif ($readSpeed -gt 50) { $overallScore += 2 } elseif ($readSpeed -gt 30) { $overallScore += 1 }
+# 写入速度（满分4分）
+if ($writeSpeed -gt 80) { $overallScore += 4 } elseif ($writeSpeed -gt 40) { $overallScore += 2 } elseif ($writeSpeed -gt 20) { $overallScore += 1 }
+# 4K随机写入（满分2分）
+if (-not $Quick -and -not $SkipWrite) {
+    if ($iops4k -gt 500) { $overallScore += 2 } elseif ($iops4k -gt 100) { $overallScore += 1 }
+}
+$overallGrade = if ($overallScore -ge 8) { "A（优秀）" } elseif ($overallScore -ge 6) { "B（良好）" } elseif ($overallScore -ge 4) { "C（一般）" } elseif ($overallScore -ge 2) { "D（较差）" } else { "E（很差）" }
 
-if ($iops4k -gt 500) { $ratings += "随机性能较好" }
-else { $ratings += "随机性能较弱（典型 U 盘表现）" }
-
-if ($dirty) { $ratings += "文件系统需修复" }
-if ($fsName -eq 'FAT32') { $ratings += "FAT32 有 4GB 单文件限制" }
-
-Write-ReportLine "性能评价      : $($ratings -join '；')"
+Write-ReportLine "综合评级      : $overallGrade"
+Write-ReportLine "读取性能      : $readRating（$([math]::Round($readSpeed,1)) MB/s）"
+Write-ReportLine "写入性能      : $writeRating（$([math]::Round($writeSpeed,1)) MB/s）"
+Write-ReportLine "随机性能      : $randomRating$iops4kDisplay"
 Write-ReportLine ""
+
+# --- 动态生成建议 ---
+$suggestions = New-Object System.Collections.Generic.List[string]
+$suggestionNum = 1
+
+# 基础建议：安全弹出
+$suggestions.Add("每次使用后务必「安全弹出」再拔出，避免脏位置位和数据损坏")
+
+# 疑似杂牌/扩容盘检测
+$isSuspicious = $false
+$suspiciousReasons = @()
+if ($deviceModel -like '*VendorCo*' -or $deviceModel -like '*ProductCode*' -or $manufacturer -like '*VendorCo*') {
+    $isSuspicious = $true
+    $suspiciousReasons += "设备型号为默认占位名（VendorCo ProductCode）"
+}
+$knownVids = @('0781','0951','05DC','04E8','04B4','13FE','1B4F','090C','1F75','0DD8','125F','0930','048D','18A5','058F','14CD','1E3D','2013','3538','3551','3569','3571','3581','3591','35BD','35CE','35FA','3639','3669','3679','3689','3699','36B9','36C9','36D9','36E9','36F9','3709','3719','3729','3739','3749','3759','3769','3779','3789','3799','37A9','37B9','37C9','37D9','37E9','37F9','3809','3819','3829','3839','3849','3859','3869','3879','3889','3899','38A9','38B9','38C9','38D9','38E9','38F9','3909','3919','3929','3939','3949','3959','3969','3979','3989','3999','39A9','39B9','39C9','39D9','39E9','39F9','3A09','3A19','3A29','3A39','3A49','3A59','3A69','3A79','3A89','3A99','3AA9','3AB9','3AC9','3AD9','3AE9','3AF9','3B09','3B19','3B29','3B39','3B49','3B59','3B69','3B79','3B89','3B99','3BA9','3BB9','3BC9','3BD9','3BE9','3BF9','3C09','3C19','3C29','3C39','3C49','3C59','3C69','3C79','3C89','3C99','3CA9','3CB9','3CC9','3CD9','3CE9','3CF9','3D09','3D19','3D29','3D39','3D49','3D59','3D69','3D79','3D89','3D99','3DA9','3DB9','3DC9','3DD9','3DE9','3DF9','3E09','3E19','3E29','3E39','3E49','3E59','3E69','3E79','3E89','3E99','3EA9','3EB9','3EC9','3ED9','3EE9','3EF9','3F09','3F19','3F29','3F39','3F49','3F59','3F69','3F79','3F89','3F99','3FA9','3FB9','3FC9','3FD9','3FE9','3FF9')
+if ($vid -ne '未知' -and $knownVids -notcontains $vid -and $usbVersion -like '*未知*') {
+    $isSuspicious = $true
+    $suspiciousReasons += "厂商ID 0x$vid 非知名品牌且接口版本未正确报告"
+}
+if ($usbVersion -like '*未知*' -and $uasSupport -eq $false) {
+    $isSuspicious = $true
+    $suspiciousReasons += "使用BOT老旧协议且接口版本未知"
+}
+if ($writeSpeed -lt 15 -and $readSpeed -lt 30) {
+    $isSuspicious = $true
+    $suspiciousReasons += "读写速度远低于正规USB 3.0 U盘水平"
+}
+
+if ($isSuspicious) {
+    $suggestions.Add("⚠️ 该U盘疑似杂牌/黑片/扩容盘（$($suspiciousReasons -join '；')），不建议存储重要数据，建议用MyDiskTest或h2testw检测实际容量")
+}
+
+# 性能相关建议
+if ($writeSpeed -lt 15) {
+    $suggestions.Add("写入速度仅 $([math]::Round($writeSpeed,1)) MB/s，大文件写入耗时较长，不适合频繁传输大文件")
+}
+if ($readSpeed -lt 30) {
+    $suggestions.Add("读取速度仅 $([math]::Round($readSpeed,1)) MB/s，大文件读取较慢，如需高速传输建议更换USB 3.0以上正规品牌U盘")
+}
+if (-not $Quick -and -not $SkipWrite -and $iops4k -lt 50) {
+    $suggestions.Add("4K随机写入仅 $([math]::Round($iops4k,1)) IOPS，避免频繁小文件写入/删除，大文件顺序传输效率最高")
+}
+if (-not $uasSupport -or $usbVersion -like '*未知*' -or $usbVersion -like '*2.0*') {
+    $suggestions.Add("该U盘使用BOT协议/疑似USB 2.0接口，如需高速传输建议更换支持UASP的USB 3.0以上U盘")
+}
+
+# 文件系统相关建议
+if ($fsName -eq 'FAT32') {
+    if ($physSize -gt 32GB) {
+        $suggestions.Add("容量较大但为FAT32格式，建议格式化为exFAT以支持4GB以上大文件并提升空间利用率")
+    } else {
+        $suggestions.Add("FAT32格式不支持4GB以上单文件，如需存储大文件建议格式化为exFAT（跨平台兼容好）")
+    }
+}
+
+# 健康状态相关建议
+if ($dirty) {
+    $suggestions.Add("文件系统脏位已置位，建议备份数据后以管理员身份运行 chkdsk ${DriveLetter}: /F /V 修复")
+}
+if ($volHealth -eq 'Warning' -and -not $dirty) {
+    $suggestions.Add("卷健康状态为警告，建议备份重要数据并检查文件系统完整性")
+}
+
+# 通用建议
+$suggestions.Add("U盘不适合长期冷存储，重要数据建议遵循3-2-1备份原则（3份副本、2种介质、1份异地）")
+$suggestions.Add("定期检查健康状态，出现读写明显变慢、文件丢失或坏块时及时备份并更换")
+
 Write-ReportLine "使用建议      :"
-Write-ReportLine "  1. 每次使用后务必「安全弹出」再拔出，避免脏位置位和数据损坏"
-Write-ReportLine "  2. U 盘不适合长期冷存储，重要数据建议遵循 3-2-1 备份原则"
-Write-ReportLine "  3. 如需存储大于 4GB 的文件，建议格式化为 exFAT（跨平台兼容好）"
-Write-ReportLine "  4. 避免频繁小文件写入（4K 随机性能弱），大文件顺序传输效率最高"
-Write-ReportLine "  5. 定期检查健康状态，出现读写变慢/坏块时及时备份并更换"
+foreach ($s in $suggestions) {
+    Write-ReportLine ("  {0}. {1}" -f $suggestionNum, $s)
+    $suggestionNum++
+}
+
+# ============================================================
+#  性能速览（插入到报告开头）
+# ============================================================
+$summaryLines = New-Object System.Collections.Generic.List[string]
+$bar = "=" * 64
+$summaryLines.Add("")
+$summaryLines.Add($bar)
+$summaryLines.Add("  性能速览")
+$summaryLines.Add($bar)
+$summaryLines.Add("")
+$summaryLines.Add("综合评级      : $overallGrade")
+$summaryLines.Add("")
+$summaryLines.Add("--- 关键性能指标 ---")
+$summaryLines.Add("  顺序读取      : $([math]::Round($readSpeed,1)) MB/s（$readRating）")
+$summaryLines.Add("  顺序写入      : $([math]::Round($writeSpeed,1)) MB/s（$writeRating）")
+$summaryLines.Add("  4K随机写入    : $iops4kDisplay（$randomRating）")
+$summaryLines.Add("")
+$summaryLines.Add("--- 与正规U盘对比 ---")
+$summaryLines.Add("  指标          你的U盘                  正规USB 3.0 U盘（参考）")
+$summaryLines.Add("  ----------    --------------------    ------------------------")
+$summaryLines.Add("  顺序读取      $([math]::Round($readSpeed,1).ToString().PadRight(20))  100-150 MB/s")
+$summaryLines.Add("  顺序写入      $([math]::Round($writeSpeed,1).ToString().PadRight(20))  30-80 MB/s")
+$summaryLines.Add("  4K随机写      $([math]::Round($iops4k,1).ToString().PadRight(20))  100-500 IOPS")
+$summaryLines.Add("  接口协议      $($usbVersion.PadRight(20))  USB 3.2 Gen1 + UASP")
+$summaryLines.Add("")
+
+# 一句话总结
+if ($isSuspicious) {
+    $summaryLines.Add("⚠️  总结：该U盘疑似杂牌/黑片/扩容盘，性能远低于正规U盘，不建议存储重要数据。")
+} elseif ($overallScore -le 2) {
+    $summaryLines.Add("⚠️  总结：该U盘性能较差，仅适合临时小文件传输，不适合频繁使用或存储重要数据。")
+} elseif ($overallScore -le 4) {
+    $summaryLines.Add("📝 总结：该U盘性能一般，适合日常文件传输，大文件和频繁写入场景体验较差。")
+} else {
+    $summaryLines.Add("✅ 总结：该U盘性能良好，可满足日常文件传输需求。")
+}
+$summaryLines.Add("")
+$summaryLines.Add($bar)
+
+# 插入到报告开头（"一、设备识别"之前）
+$insertIndex = 0
+for ($i = 0; $i -lt $script:report.Count; $i++) {
+    if ($script:report[$i] -match '一、设备识别') {
+        $insertIndex = $i
+        break
+    }
+}
+if ($insertIndex -gt 0) {
+    $script:report.InsertRange($insertIndex, $summaryLines)
+}
 
 # ============================================================
 #  输出报告文件
@@ -704,7 +832,31 @@ if ($HTML) {
         # 构建 HTML 正文
         $htmlBody = ""
         foreach ($sec in $sections) {
-            $htmlBody += "`n<div class=`"card`">`n<h2>$($sec.Title)</h2>`n<table class=`"info-table`">`n"
+            $htmlBody += "`n<div class=`"card`">`n<h2>$($sec.Title)</h2>`n"
+
+            # 性能速览卡片：添加渐变评级条
+            if ($sec.Title -eq "性能速览") {
+                $ratingPercent = [math]::Round([math]::Min($overallScore, 10) / 10 * 100, 1)
+                $htmlBody += @"
+<div class="rating-bar-container">
+  <div class="rating-bar-track">
+    <div class="rating-bar-pointer" style="left: $ratingPercent%">
+      <div class="rating-bar-tooltip">$overallGrade</div>
+    </div>
+  </div>
+  <div class="rating-bar-labels">
+    <span>E<br><small>很差</small></span>
+    <span>D<br><small>较差</small></span>
+    <span>C<br><small>一般</small></span>
+    <span>B<br><small>良好</small></span>
+    <span>A<br><small>优秀</small></span>
+  </div>
+  <div class="rating-bar-score">综合得分：$overallScore / 10 分</div>
+</div>
+"@
+            }
+
+            $htmlBody += "<table class=`"info-table`">`n"
             foreach ($row in $sec.Rows) {
                 switch ($row.Type) {
                     'subtitle' {
@@ -738,6 +890,40 @@ if ($HTML) {
             }
             $htmlBody += "</table>`n</div>`n"
         }
+
+        # 评分规则说明卡片
+        $htmlBody += @"
+`n<div class="card">
+<h2>评分规则说明</h2>
+<p class="rule-intro">本报告采用 <strong>10 分制</strong>综合评分，由以下三项组成：</p>
+<table class="info-table">
+<tr><td class="key">读取速度</td><td class="value">满分 4 分</td></tr>
+<tr><td class="key">写入速度</td><td class="value">满分 4 分</td></tr>
+<tr><td class="key">4K 随机写入</td><td class="value">满分 2 分（快速模式下不计分）</td></tr>
+</table>
+<h3>各项评分标准</h3>
+<table class="info-table">
+<tr><th class="rule-th">项目</th><th class="rule-th">得分</th><th class="rule-th">条件</th></tr>
+<tr><td rowspan="3">读取速度</td><td>4 分</td><td>> 100 MB/s</td></tr>
+<tr><td>2 分</td><td>> 50 MB/s</td></tr>
+<tr><td>1 分</td><td>> 30 MB/s</td></tr>
+<tr><td rowspan="3">写入速度</td><td>4 分</td><td>> 80 MB/s</td></tr>
+<tr><td>2 分</td><td>> 40 MB/s</td></tr>
+<tr><td>1 分</td><td>> 20 MB/s</td></tr>
+<tr><td rowspan="2">4K 随机写</td><td>2 分</td><td>> 500 IOPS</td></tr>
+<tr><td>1 分</td><td>> 100 IOPS</td></tr>
+</table>
+<h3>等级划分</h3>
+<table class="info-table">
+<tr><th class="rule-th">等级</th><th class="rule-th">分数范围</th><th class="rule-th">说明</th></tr>
+<tr><td><span class="grade-a">A（优秀）</span></td><td>8 - 10 分</td><td>高性能 U 盘，适合大文件频繁传输</td></tr>
+<tr><td><span class="grade-b">B（良好）</span></td><td>6 - 7 分</td><td>主流正规 U 盘水平，日常使用流畅</td></tr>
+<tr><td><span class="grade-c">C（一般）</span></td><td>4 - 5 分</td><td>入门级 U 盘，大文件传输较慢</td></tr>
+<tr><td><span class="grade-d">D（较差）</span></td><td>2 - 3 分</td><td>性能偏弱，仅适合临时小文件</td></tr>
+<tr><td><span class="grade-e">E（很差）</span></td><td>0 - 1 分</td><td>性能极差，疑似杂牌/黑片/扩容盘</td></tr>
+</table>
+</div>
+"@
 
         # 检测时间和盘符
         $reportTime = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
@@ -786,6 +972,82 @@ body {
     color: #764ba2;
     margin: 16px 0 10px 0;
 }
+/* 性能评级条 */
+.rating-bar-container {
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: #f8f9ff;
+    border-radius: 10px;
+}
+.rating-bar-track {
+    position: relative;
+    height: 16px;
+    border-radius: 8px;
+    background: linear-gradient(to right,
+        #e74c3c 0%,
+        #e67e22 25%,
+        #f1c40f 50%,
+        #2ecc71 75%,
+        #27ae60 100%);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    margin: 20px 0 8px 0;
+}
+.rating-bar-pointer {
+    position: absolute;
+    top: -8px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 14px solid #2c3e50;
+    transform: translateX(-50%);
+    transition: left 0.5s ease;
+}
+.rating-bar-tooltip {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2c3e50;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.rating-bar-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #2c3e50;
+}
+.rating-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2px;
+}
+.rating-bar-labels span {
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: #555;
+}
+.rating-bar-labels small {
+    font-weight: normal;
+    font-size: 11px;
+    color: #999;
+}
+.rating-bar-score {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #666;
+}
 .info-table { width: 100%; border-collapse: collapse; }
 .info-table td {
     padding: 8px 12px;
@@ -815,6 +1077,27 @@ body {
     color: #27ae60;
     font-weight: 600;
 }
+/* 评分规则卡片 */
+.rule-intro {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+.info-table th.rule-th {
+    background: #f0f2ff;
+    color: #667eea;
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 13px;
+    border-bottom: 2px solid #667eea;
+}
+.grade-a { color: #27ae60; font-weight: bold; }
+.grade-b { color: #2ecc71; font-weight: bold; }
+.grade-c { color: #f1c40f; font-weight: bold; }
+.grade-d { color: #e67e22; font-weight: bold; }
+.grade-e { color: #e74c3c; font-weight: bold; }
 .notice {
     background: #fff3cd;
     border-left: 4px solid #ffc107;

@@ -41,6 +41,82 @@ body {
     color: #764ba2;
     margin: 16px 0 10px 0;
 }
+/* 性能评级条 */
+.rating-bar-container {
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: #f8f9ff;
+    border-radius: 10px;
+}
+.rating-bar-track {
+    position: relative;
+    height: 16px;
+    border-radius: 8px;
+    background: linear-gradient(to right,
+        #e74c3c 0%,
+        #e67e22 25%,
+        #f1c40f 50%,
+        #2ecc71 75%,
+        #27ae60 100%);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+    margin: 20px 0 8px 0;
+}
+.rating-bar-pointer {
+    position: absolute;
+    top: -8px;
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 14px solid #2c3e50;
+    transform: translateX(-50%);
+    transition: left 0.5s ease;
+}
+.rating-bar-tooltip {
+    position: absolute;
+    top: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2c3e50;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+.rating-bar-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #2c3e50;
+}
+.rating-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2px;
+}
+.rating-bar-labels span {
+    text-align: center;
+    font-size: 13px;
+    font-weight: bold;
+    color: #555;
+}
+.rating-bar-labels small {
+    font-weight: normal;
+    font-size: 11px;
+    color: #999;
+}
+.rating-bar-score {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #666;
+}
 .info-table { width: 100%; border-collapse: collapse; }
 .info-table td {
     padding: 8px 12px;
@@ -70,6 +146,27 @@ body {
     color: #27ae60;
     font-weight: 600;
 }
+/* 评分规则卡片 */
+.rule-intro {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 16px;
+    line-height: 1.6;
+}
+.info-table th.rule-th {
+    background: #f0f2ff;
+    color: #667eea;
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 13px;
+    border-bottom: 2px solid #667eea;
+}
+.grade-a { color: #27ae60; font-weight: bold; }
+.grade-b { color: #2ecc71; font-weight: bold; }
+.grade-c { color: #f1c40f; font-weight: bold; }
+.grade-d { color: #e67e22; font-weight: bold; }
+.grade-e { color: #e74c3c; font-weight: bold; }
 .notice {
     background: #fff3cd;
     border-left: 4px solid #ffc107;
@@ -144,15 +241,38 @@ body {
 <div class="container">
 <div class="header">
     <h1>USB Disk Inspector</h1>
-    <div class="meta">检测盘符: D: ｜ 检测时间: 2026-09-04 12:07:02</div>
+    <div class="meta">检测盘符: D: ｜ 检测时间: 2026-09-04 17:50:43</div>
     <button class="copy-btn" onclick="copyReport()">📋 复制报告内容</button>
 </div>
 <div id="toast" class="toast">已复制到剪贴板</div>
 <textarea id="reportText" style="display:none;">
 USB Disk Inspector - U 盘硬件信息与性能检测
-检测时间: 2026-09-04 12:06:41
+检测时间: 2026-09-04 17:50:22
 目标盘符: D:\
 
+
+================================================================
+
+================================================================
+  性能速览
+================================================================
+
+综合评级      : B（良好）
+
+--- 关键性能指标 ---
+  顺序读取      : 144.3 MB/s（优秀）
+  顺序写入      : 62.2 MB/s（中等）
+  4K随机写入    : （快速模式已跳过）（未测试）
+
+--- 与正规U盘对比 ---
+  指标          你的U盘                  正规USB 3.0 U盘（参考）
+  ----------    --------------------    ------------------------
+  顺序读取      144.3                 100-150 MB/s
+  顺序写入      62.2                  30-80 MB/s
+  4K随机写      0                     100-500 IOPS
+  接口协议      USB 3.2 Gen 1 (原 USB 3.0, 理论 5Gbps)  USB 3.2 Gen1 + UASP
+
+✅ 总结：该U盘性能良好，可满足日常文件传输需求。
 
 ================================================================
   一、设备识别
@@ -238,12 +358,12 @@ USB 控制器    : Intel(R) USB 3.20 eXtensible Host Controller - 1.20 (Microsof
 
 
 --- 顺序写入测试 ---
-  写入耗时    : 4.2 秒
-  写入速度    : 60.98 MB/s
+  写入耗时    : 4.11 秒
+  写入速度    : 62.24 MB/s
 
 --- 顺序读取测试（无缓存 I/O） ---
-  读取耗时    : 1.81 秒
-  读取速度    : 141.52 MB/s
+  读取耗时    : 1.77 秒
+  读取速度    : 144.27 MB/s
   读取数据量  : 256 MB
 
 --- 4K 随机写入测试 ---
@@ -264,14 +384,74 @@ SMART 支持    : 否（U 盘通常无标准 SMART 接口）
 ================================================================
   八、综合评价与建议
 ================================================================
-性能评价      : 读取性能优秀；写入性能中等；随机性能较弱（典型 U 盘表现）；FAT32 有 4GB 单文件限制
+综合评级      : B（良好）
+读取性能      : 优秀（144.3 MB/s）
+写入性能      : 中等（62.2 MB/s）
+随机性能      : 未测试（快速模式已跳过）
 
 使用建议      :
   1. 每次使用后务必「安全弹出」再拔出，避免脏位置位和数据损坏
-  2. U 盘不适合长期冷存储，重要数据建议遵循 3-2-1 备份原则
-  3. 如需存储大于 4GB 的文件，建议格式化为 exFAT（跨平台兼容好）
-  4. 避免频繁小文件写入（4K 随机性能弱），大文件顺序传输效率最高
-  5. 定期检查健康状态，出现读写变慢/坏块时及时备份并更换</textarea>
+  2. 容量较大但为FAT32格式，建议格式化为exFAT以支持4GB以上大文件并提升空间利用率
+  3. 卷健康状态为警告，建议备份重要数据并检查文件系统完整性
+  4. U盘不适合长期冷存储，重要数据建议遵循3-2-1备份原则（3份副本、2种介质、1份异地）
+  5. 定期检查健康状态，出现读写明显变慢、文件丢失或坏块时及时备份并更换</textarea>
+
+<div class="card">
+<h2>性能速览</h2>
+<div class="rating-bar-container">
+  <div class="rating-bar-track">
+    <div class="rating-bar-pointer" style="left: 60%">
+      <div class="rating-bar-tooltip">B（良好）</div>
+    </div>
+  </div>
+  <div class="rating-bar-labels">
+    <span>E<br><small>很差</small></span>
+    <span>D<br><small>较差</small></span>
+    <span>C<br><small>一般</small></span>
+    <span>B<br><small>良好</small></span>
+    <span>A<br><small>优秀</small></span>
+  </div>
+  <div class="rating-bar-score">综合得分：6 / 10 分</div>
+</div><table class="info-table">
+<tr><td class="key">综合评级</td><td class="value">B（良好）</td></tr>
+</table>
+<h3>关键性能指标</h3>
+<table class="info-table">
+</table>
+<div class="text-line">  顺序读取      : 144.3 MB/s（优秀）</div>
+<table class="info-table">
+</table>
+<div class="text-line">  顺序写入      : 62.2 MB/s（中等）</div>
+<table class="info-table">
+</table>
+<div class="text-line">  4K随机写入    : （快速模式已跳过）（未测试）</div>
+<table class="info-table">
+</table>
+<h3>与正规U盘对比</h3>
+<table class="info-table">
+</table>
+<div class="text-line">  指标          你的U盘                  正规USB 3.0 U盘（参考）</div>
+<table class="info-table">
+</table>
+<div class="text-line">  ----------    --------------------    ------------------------</div>
+<table class="info-table">
+</table>
+<div class="text-line">  顺序读取      144.3                 100-150 MB/s</div>
+<table class="info-table">
+</table>
+<div class="text-line">  顺序写入      62.2                  30-80 MB/s</div>
+<table class="info-table">
+</table>
+<div class="text-line">  4K随机写      0                     100-500 IOPS</div>
+<table class="info-table">
+</table>
+<div class="text-line">  接口协议      USB 3.2 Gen 1 (原 USB 3.0, 理论 5Gbps)  USB 3.2 Gen1 + UASP</div>
+<table class="info-table">
+</table>
+<div class="text-line">✅ 总结：该U盘性能良好，可满足日常文件传输需求。</div>
+<table class="info-table">
+</table>
+</div>
 
 <div class="card">
 <h2>一、设备识别</h2>
@@ -397,19 +577,19 @@ SMART 支持    : 否（U 盘通常无标准 SMART 接口）
 <h3>顺序写入测试</h3>
 <table class="info-table">
 </table>
-<div class="text-line">  写入耗时    : 4.2 秒</div>
+<div class="text-line">  写入耗时    : 4.11 秒</div>
 <table class="info-table">
 </table>
-<div class="text-line">  写入速度    : 60.98 MB/s</div>
+<div class="text-line">  写入速度    : 62.24 MB/s</div>
 <table class="info-table">
 </table>
 <h3>顺序读取测试（无缓存 I/O）</h3>
 <table class="info-table">
 </table>
-<div class="text-line">  读取耗时    : 1.81 秒</div>
+<div class="text-line">  读取耗时    : 1.77 秒</div>
 <table class="info-table">
 </table>
-<div class="text-line">  读取速度    : 141.52 MB/s</div>
+<div class="text-line">  读取速度    : 144.27 MB/s</div>
 <table class="info-table">
 </table>
 <div class="text-line">  读取数据量  : 256 MB</div>
@@ -441,7 +621,10 @@ SMART 支持    : 否（U 盘通常无标准 SMART 接口）
 <div class="card">
 <h2>八、综合评价与建议</h2>
 <table class="info-table">
-<tr><td class="key">性能评价</td><td class="value ok">读取性能优秀；写入性能中等；随机性能较弱（典型 U 盘表现）；FAT32 有 4GB 单文件限制</td></tr>
+<tr><td class="key">综合评级</td><td class="value">B（良好）</td></tr>
+<tr><td class="key">读取性能</td><td class="value ok">优秀（144.3 MB/s）</td></tr>
+<tr><td class="key">写入性能</td><td class="value">中等（62.2 MB/s）</td></tr>
+<tr><td class="key">随机性能</td><td class="value">未测试（快速模式已跳过）</td></tr>
 </table>
 <div class="text-line">使用建议      :</div>
 <table class="info-table">
@@ -449,20 +632,50 @@ SMART 支持    : 否（U 盘通常无标准 SMART 接口）
 <div class="text-line">  1. 每次使用后务必「安全弹出」再拔出，避免脏位置位和数据损坏</div>
 <table class="info-table">
 </table>
-<div class="text-line">  2. U 盘不适合长期冷存储，重要数据建议遵循 3-2-1 备份原则</div>
+<div class="text-line">  2. 容量较大但为FAT32格式，建议格式化为exFAT以支持4GB以上大文件并提升空间利用率</div>
 <table class="info-table">
 </table>
-<div class="text-line">  3. 如需存储大于 4GB 的文件，建议格式化为 exFAT（跨平台兼容好）</div>
+<div class="text-line">  3. 卷健康状态为警告，建议备份重要数据并检查文件系统完整性</div>
 <table class="info-table">
 </table>
-<div class="text-line">  4. 避免频繁小文件写入（4K 随机性能弱），大文件顺序传输效率最高</div>
+<div class="text-line">  4. U盘不适合长期冷存储，重要数据建议遵循3-2-1备份原则（3份副本、2种介质、1份异地）</div>
 <table class="info-table">
 </table>
-<div class="text-line">  5. 定期检查健康状态，出现读写变慢/坏块时及时备份并更换</div>
+<div class="text-line">  5. 定期检查健康状态，出现读写明显变慢、文件丢失或坏块时及时备份并更换</div>
 <table class="info-table">
 </table>
 </div>
 
+<div class="card">
+<h2>评分规则说明</h2>
+<p class="rule-intro">本报告采用 <strong>10 分制</strong>综合评分，由以下三项组成：</p>
+<table class="info-table">
+<tr><td class="key">读取速度</td><td class="value">满分 4 分</td></tr>
+<tr><td class="key">写入速度</td><td class="value">满分 4 分</td></tr>
+<tr><td class="key">4K 随机写入</td><td class="value">满分 2 分（快速模式下不计分）</td></tr>
+</table>
+<h3>各项评分标准</h3>
+<table class="info-table">
+<tr><th class="rule-th">项目</th><th class="rule-th">得分</th><th class="rule-th">条件</th></tr>
+<tr><td rowspan="3">读取速度</td><td>4 分</td><td>> 100 MB/s</td></tr>
+<tr><td>2 分</td><td>> 50 MB/s</td></tr>
+<tr><td>1 分</td><td>> 30 MB/s</td></tr>
+<tr><td rowspan="3">写入速度</td><td>4 分</td><td>> 80 MB/s</td></tr>
+<tr><td>2 分</td><td>> 40 MB/s</td></tr>
+<tr><td>1 分</td><td>> 20 MB/s</td></tr>
+<tr><td rowspan="2">4K 随机写</td><td>2 分</td><td>> 500 IOPS</td></tr>
+<tr><td>1 分</td><td>> 100 IOPS</td></tr>
+</table>
+<h3>等级划分</h3>
+<table class="info-table">
+<tr><th class="rule-th">等级</th><th class="rule-th">分数范围</th><th class="rule-th">说明</th></tr>
+<tr><td><span class="grade-a">A（优秀）</span></td><td>8 - 10 分</td><td>高性能 U 盘，适合大文件频繁传输</td></tr>
+<tr><td><span class="grade-b">B（良好）</span></td><td>6 - 7 分</td><td>主流正规 U 盘水平，日常使用流畅</td></tr>
+<tr><td><span class="grade-c">C（一般）</span></td><td>4 - 5 分</td><td>入门级 U 盘，大文件传输较慢</td></tr>
+<tr><td><span class="grade-d">D（较差）</span></td><td>2 - 3 分</td><td>性能偏弱，仅适合临时小文件</td></tr>
+<tr><td><span class="grade-e">E（很差）</span></td><td>0 - 1 分</td><td>性能极差，疑似杂牌/黑片/扩容盘</td></tr>
+</table>
+</div>
 <div class="footer">
     本报告由 USB Disk Inspector 自动生成 ｜ GitHub: usb-disk-inspector
 </div>
