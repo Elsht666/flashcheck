@@ -1,0 +1,23 @@
+# 临时文件
+*.tmp
+*.temp
+__usbinspect_tmp.bin
+__usbinspect_4k/
+
+# 测试报告
+report*.txt
+*.log
+
+# 系统文件
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# PowerShell
+*.ps1.bak
